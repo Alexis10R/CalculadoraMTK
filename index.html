@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Calculadora MKT - QA Industrial</title>
+<title>Calculadora MKT V3 - QA Industrial</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
     :root {
-        /* SCADA DApp Theme */
         --bg-dark: #070b14;
         --bg-panel: #111827;
         --text-main: #f8fafc;
@@ -24,27 +23,26 @@
 
     .dapp-container { max-width: 800px; margin: 0 auto; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
     
-    /* CABECERA */
     .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.4); }
     .hub-back-btn { background: rgba(14, 165, 233, 0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9em; transition: 0.3s; display: flex; align-items: center; }
     .hub-back-btn:hover { background: var(--neon-blue); color: #fff; box-shadow: 0 0 15px var(--neon-blue); }
 
-    /* CONTENEDOR INTERNO CON GRID SCADA */
     .calc-zone {
         background-image: linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
         background-size: 20px 20px;
         padding: 25px;
     }
 
-    /* PANELES DE CONTROL */
     .control-panel { background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; }
     .control-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
     
     label { font-size: 0.9em; color: var(--text-muted); font-weight: bold; }
-    input[type="number"] { background: #030712; border: 1px solid #334155; color: var(--neon-blue); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1.1em; width: 100px; outline: none; transition: 0.3s; }
+    input[type="number"] { background: #030712; border: 1px solid #334155; color: var(--neon-blue); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1.1em; outline: none; transition: 0.3s; }
     input[type="number"]:focus { border-color: var(--neon-blue); box-shadow: 0 0 8px rgba(14, 165, 233, 0.3); }
     
-    /* TOGGLE SWITCH (LIMITES) */
+    select { background: #030712; border: 1px solid #334155; color: var(--neon-blue); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1em; outline: none; cursor: pointer; transition: 0.3s; }
+    select:focus { border-color: var(--neon-blue); box-shadow: 0 0 8px rgba(14, 165, 233, 0.3); }
+
     .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
@@ -55,17 +53,23 @@
     .limits-container { display: flex; gap: 10px; align-items: center; opacity: 0.3; pointer-events: none; transition: 0.3s; }
     .limits-container.active { opacity: 1; pointer-events: all; }
 
-    /* ZONA DE INPUTS DINÁMICOS */
-    .data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto; padding-right: 10px; }
-    .temp-input-wrapper { display: flex; align-items: center; background: #030712; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-    .temp-input-label { background: #1e293b; color: var(--text-muted); font-size: 0.75em; padding: 12px 8px; font-family: monospace; border-right: 1px solid var(--border-color); }
-    .temp-input { width: 100%; border: none !important; border-radius: 0 !important; color: #fff !important; }
+    /* ZONA DE INPUTS (FLEXIBLE) */
+    .data-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding-right: 10px; }
+    
+    /* Modo Bloques */
+    .data-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #030712; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; align-items: center; width: 100%; box-sizing: border-box; }
+    .input-group { display: flex; align-items: center; width: 100%; }
+    .input-tag { background: #1e293b; color: var(--text-muted); font-size: 0.8em; padding: 10px; font-family: monospace; border: 1px solid #334155; border-right: none; border-radius: 4px 0 0 4px; white-space: nowrap; }
+    .data-row input { width: 100%; border-radius: 0 4px 4px 0; border: 1px solid #334155; box-sizing: border-box; }
 
-    /* BOTONES ACCIÓN */
-    .btn-calc { background: rgba(14, 165, 233, 0.2); border: 1px solid var(--neon-blue); color: var(--neon-blue); width: 100%; padding: 15px; font-size: 1.1em; font-weight: bold; font-family: monospace; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-top: 20px; box-shadow: 0 0 10px rgba(14, 165, 233, 0.1); }
+    /* Modo Individual */
+    .temp-input-wrapper { display: flex; align-items: center; background: #030712; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; width: calc(33.333% - 7px); min-width: 110px; box-sizing: border-box; }
+    .temp-input-label { background: #1e293b; color: var(--text-muted); font-size: 0.75em; padding: 12px 8px; font-family: monospace; border-right: 1px solid var(--border-color); }
+    .temp-input-wrapper input { width: 100%; border: none !important; border-radius: 0 !important; color: #fff !important; }
+
+    .btn-calc { background: rgba(14, 165, 233, 0.2); border: 1px solid var(--neon-blue); color: var(--neon-blue); width: 100%; padding: 15px; font-size: 1.1em; font-weight: bold; font-family: monospace; letter-spacing: 2px; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-top: 20px; }
     .btn-calc:hover { background: var(--neon-blue); color: #fff; box-shadow: 0 0 20px var(--neon-blue); }
 
-    /* PANTALLA LCD (RESULTADOS) */
     .lcd-screen { background: #030712; border: 2px solid #334155; border-radius: 12px; padding: 25px; margin-top: 25px; text-align: center; position: relative; transition: 0.3s; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
     .lcd-screen.pass { border-color: var(--neon-green); box-shadow: inset 0 0 30px rgba(16, 185, 129, 0.1), 0 0 15px rgba(16, 185, 129, 0.2); }
     .lcd-screen.fail { border-color: var(--neon-red); box-shadow: inset 0 0 30px rgba(244, 63, 94, 0.1), 0 0 15px rgba(244, 63, 94, 0.2); }
@@ -90,15 +94,23 @@
 
 <div class="dapp-container">
     <div class="header-bar">
-        <h3 style="margin:0; font-size: 1.1em; color:#f8fafc; text-shadow:none;">TOOL <span style="color:var(--text-muted); font-weight:normal;">| MKT CALCULATOR</span></h3>
+        <h3 style="margin:0; font-size: 1.1em; color:#f8fafc; text-shadow:none;">TOOL <span style="color:var(--text-muted); font-weight:normal;">| MKT MASTER V3</span></h3>
         <a href="https://alexis10r.github.io/hub/" class="hub-back-btn">← Hub Central</a>
     </div>
 
     <div class="calc-zone">
         <div class="control-panel">
             <div class="control-row">
-                <label style="width: 150px;">Cant. de Lecturas (n):</label>
-                <input type="number" id="n-datos" min="2" max="100" value="3" onchange="generateInputs()">
+                <label style="width: 150px;">Modo de Ingreso:</label>
+                <select id="calc-mode" onchange="switchMode()">
+                    <option value="blocks">Bloques de Tiempo (Datalogger)</option>
+                    <option value="individual">Lecturas Individuales (Bitácora)</option>
+                </select>
+            </div>
+
+            <div class="control-row" style="border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <label id="label-n" style="width: 200px;">Bloques de Temp. (Filas):</label>
+                <input type="number" id="n-datos" min="1" max="100" value="2" onchange="generateInputs()" style="width:80px;">
             </div>
             
             <div class="control-row" style="border-top: 1px solid var(--border-color); padding-top: 15px;">
@@ -109,14 +121,14 @@
                 </label>
                 
                 <div class="limits-container" id="limits-box">
-                    <input type="number" id="limit-min" placeholder="Límite Min °C" step="0.1" style="width: 120px;">
+                    <input type="number" id="limit-min" placeholder="Min °C" step="0.1" style="width: 100px;">
                     <span style="color:var(--text-muted); font-family: monospace;">y/o</span>
-                    <input type="number" id="limit-max" placeholder="Límite Max °C" step="0.1" style="width: 120px;">
+                    <input type="number" id="limit-max" placeholder="Max °C" step="0.1" style="width: 100px;">
                 </div>
             </div>
         </div>
 
-        <label style="font-family:monospace; color:var(--neon-blue);">[ INGRESO DE DATOS TÉRMICOS ]</label>
+        <label style="font-family:monospace; color:var(--neon-blue);">[ MATRIZ DE DATOS TÉRMICOS ]</label>
         <div class="data-grid" id="data-inputs">
             </div>
 
@@ -132,18 +144,14 @@
                     <span class="stat-label">PROMEDIO SIMPLE</span>
                     <span class="stat-val" id="arith-result">--.--°C</span>
                 </div>
-                <div class="stat-box">
-                    <span class="stat-label">ΔH/R CTE (K)</span>
-                    <span class="stat-val">10000.0</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">DATOS VAL.</span>
+                <div class="stat-box" id="stat-count-box">
+                    <span class="stat-label" id="label-count-result">TIEMPO TOTAL (Hrs)</span>
                     <span class="stat-val" id="n-result">0</span>
                 </div>
             </div>
         </div>
         
-        <p style="font-size:0.75em; text-align:left; margin-top:20px; font-family:monospace;">*Ecuación de Arrhenius aplicada según directrices de la Farmacopea USP &lt;1079&gt;.</p>
+        <p style="font-size:0.75em; text-align:left; margin-top:20px; font-family:monospace;">*Ecuación de Arrhenius aplicada según USP &lt;1079&gt;.</p>
     </div>
 </div>
 
@@ -153,62 +161,98 @@
         window.Telegram.WebApp.expand();
     }
 
-    // Inicializar inputs
     window.onload = generateInputs;
 
-    // Generador dinámico de casillas
+    function switchMode() {
+        const mode = document.getElementById('calc-mode').value;
+        const labelN = document.getElementById('label-n');
+        const labelCountResult = document.getElementById('label-count-result');
+        const nInput = document.getElementById('n-datos');
+        
+        if (mode === 'blocks') {
+            labelN.innerText = 'Bloques de Temp. (Filas):';
+            labelCountResult.innerText = 'TIEMPO TOTAL (Hrs)';
+            if (parseInt(nInput.value) > 50) nInput.value = 50;
+        } else {
+            labelN.innerText = 'Cantidad de Lecturas (n):';
+            labelCountResult.innerText = 'LECTURAS VALIDADAS';
+            if (parseInt(nInput.value) < 2) nInput.value = 3; 
+        }
+        
+        resetLCD();
+        generateInputs();
+    }
+
     function generateInputs() {
         let n = parseInt(document.getElementById('n-datos').value);
-        if (n < 2) n = 2; // Mínimo 2 datos para MKT
-        if (n > 200) n = 200; // Límite de seguridad
-        
+        const mode = document.getElementById('calc-mode').value;
         let container = document.getElementById('data-inputs');
         let html = '';
         
-        for(let i=0; i<n; i++) {
-            html += `
-                <div class="temp-input-wrapper">
-                    <div class="temp-input-label">T${i+1}</div>
-                    <input type="number" class="temp-input" id="t-${i}" step="0.1" placeholder="°C">
-                </div>
-            `;
+        if (mode === 'blocks') {
+            if (n < 1) n = 1;
+            if (n > 50) n = 50;
+            for(let i=0; i<n; i++) {
+                html += `
+                    <div class="data-row">
+                        <div class="input-group">
+                            <div class="input-tag">Temp. °C</div>
+                            <input type="number" class="temp-val" step="0.1" placeholder="Ej. 5">
+                        </div>
+                        <div class="input-group">
+                            <div class="input-tag">Duración</div>
+                            <input type="number" class="time-val" step="0.1" placeholder="Hrs">
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            if (n < 2) n = 2;
+            if (n > 200) n = 200;
+            for(let i=0; i<n; i++) {
+                html += `
+                    <div class="temp-input-wrapper">
+                        <div class="temp-input-label">T${i+1}</div>
+                        <input type="number" class="temp-val" step="0.1" placeholder="°C">
+                    </div>
+                `;
+            }
         }
+        
         container.innerHTML = html;
     }
 
-    // Habilitar/Deshabilitar Límites
     function toggleLimitsUI() {
         const limitsBox = document.getElementById('limits-box');
         if(document.getElementById('toggle-limits').checked) {
             limitsBox.classList.add('active');
         } else {
             limitsBox.classList.remove('active');
-            // Resetear pantalla si se apagan los límites
-            document.getElementById('lcd-display').className = 'lcd-screen';
             let mktText = document.getElementById('mkt-result').innerText;
-            if (mktText !== '--.--°C') {
+            if (mktText !== '--.--°C' && mktText !== 'ERROR') {
+                document.getElementById('lcd-display').className = 'lcd-screen';
                 document.getElementById('mkt-status').innerText = 'CÁLCULO COMPLETADO (SIN LÍMITES)';
+                document.getElementById('mkt-status').style.color = 'var(--neon-blue)';
             }
         }
     }
 
-    // Motor Matemático MKT
+    function resetLCD() {
+        document.getElementById('lcd-display').className = 'lcd-screen';
+        document.getElementById('mkt-result').innerText = '--.--°C';
+        document.getElementById('arith-result').innerText = '--.--°C';
+        document.getElementById('n-result').innerText = '0';
+        document.getElementById('mkt-status').innerText = 'ESPERANDO DATOS...';
+        document.getElementById('mkt-status').style.color = '';
+    }
+
     function calculateMKT() {
-        const inputs = document.querySelectorAll('.temp-input');
+        const mode = document.getElementById('calc-mode').value;
+        const tempInputs = document.querySelectorAll('.temp-val');
+        
         let sumExp = 0;
         let sumArith = 0;
-        let validN = 0;
-
-        // 1. Recolectar y validar datos
-        inputs.forEach(inp => {
-            let val = parseFloat(inp.value);
-            if(!isNaN(val)) {
-                let tk = val + 273.15; // Convertir a Kelvin
-                sumExp += Math.exp(-10000 / tk); // Exponencial de Arrhenius
-                sumArith += val;
-                validN++;
-            }
-        });
+        let denominator = 0; // Puede ser Total Hrs o Total Lecturas
 
         const lcd = document.getElementById('lcd-display');
         const mktRes = document.getElementById('mkt-result');
@@ -216,53 +260,69 @@
         const statusMsg = document.getElementById('mkt-status');
         const nRes = document.getElementById('n-result');
 
-        // Si no hay datos suficientes
-        if(validN < 2) {
-            lcd.className = 'lcd-screen';
-            mktRes.innerText = 'ERROR';
-            arithRes.innerText = '--.--°C';
-            nRes.innerText = validN;
-            statusMsg.innerText = 'REQUIERE MÍNIMO 2 LECTURAS';
-            statusMsg.style.color = 'var(--neon-yellow)';
-            return;
+        if (mode === 'blocks') {
+            const timeInputs = document.querySelectorAll('.time-val');
+            for (let i = 0; i < tempInputs.length; i++) {
+                let temp = parseFloat(tempInputs[i].value);
+                let time = parseFloat(timeInputs[i].value);
+
+                if(!isNaN(temp) && !isNaN(time) && time > 0) {
+                    let tk = temp + 273.15;
+                    sumExp += (Math.exp(-10000 / tk)) * time; 
+                    sumArith += (temp * time);
+                    denominator += time;
+                }
+            }
+            if(denominator <= 0) {
+                showError('INGRESE TEMPERATURA Y HORAS VÁLIDAS'); return;
+            }
+        } else {
+            for (let i = 0; i < tempInputs.length; i++) {
+                let temp = parseFloat(tempInputs[i].value);
+                if(!isNaN(temp)) {
+                    let tk = temp + 273.15;
+                    sumExp += Math.exp(-10000 / tk);
+                    sumArith += temp;
+                    denominator++;
+                }
+            }
+            if(denominator < 2) {
+                showError('REQUIERE MÍNIMO 2 LECTURAS'); return;
+            }
         }
 
-        // 2. Cálculos finales
-        let avgArith = sumArith / validN;
-        let mktK = 10000 / (-Math.log(sumExp / validN));
-        let mktC = mktK - 273.15; // Regresar a Celsius
+        // Matemáticas Core (Identicas para ambos, el denominador dicta la escala)
+        let avgArith = sumArith / denominator;
+        let mktK = 10000 / (-Math.log(sumExp / denominator));
+        let mktC = mktK - 273.15; 
 
-        // Formatear a 2 decimales
         mktRes.innerText = mktC.toFixed(2) + '°C';
         arithRes.innerText = avgArith.toFixed(2) + '°C';
-        nRes.innerText = validN;
+        nRes.innerText = mode === 'blocks' ? denominator.toFixed(1) : denominator;
 
-        // 3. Lógica de Evaluación BPF (Flexibilidad de Límites)
+        // Evaluación de Límites
+        evaluateLimits(mktC);
+    }
+
+    function evaluateLimits(mktC) {
         const useLimits = document.getElementById('toggle-limits').checked;
-        
+        const lcd = document.getElementById('lcd-display');
+        const statusMsg = document.getElementById('mkt-status');
+
         if(useLimits) {
             let minLimit = parseFloat(document.getElementById('limit-min').value);
             let maxLimit = parseFloat(document.getElementById('limit-max').value);
             
-            // Validar que se ingresó al menos un límite
             if(isNaN(minLimit) && isNaN(maxLimit)) {
-                lcd.className = 'lcd-screen';
-                statusMsg.innerText = 'INGRESE AL MENOS UN LÍMITE PARA EVALUAR';
-                statusMsg.style.color = 'var(--neon-yellow)';
+                showError('INGRESE AL MENOS UN LÍMITE PARA EVALUAR');
                 return;
             }
 
-            statusMsg.style.color = ''; // Reset inline color
-            
+            statusMsg.style.color = ''; 
             let passed = true;
             
-            // Evaluar solo los límites que tienen valores
-            if(!isNaN(minLimit) && mktC < minLimit) {
-                passed = false;
-            }
-            if(!isNaN(maxLimit) && mktC > maxLimit) {
-                passed = false;
-            }
+            if(!isNaN(minLimit) && mktC < minLimit) passed = false;
+            if(!isNaN(maxLimit) && mktC > maxLimit) passed = false;
 
             if(passed) {
                 lcd.className = 'lcd-screen pass';
@@ -272,11 +332,21 @@
                 statusMsg.innerText = '[ ALERTA BPF: FUERA DE ESPECIFICACIÓN ]';
             }
         } else {
-            // Sin límites activos
             lcd.className = 'lcd-screen';
             statusMsg.style.color = 'var(--neon-blue)';
             statusMsg.innerText = 'CÁLCULO COMPLETADO';
         }
+    }
+
+    function showError(msg) {
+        const lcd = document.getElementById('lcd-display');
+        lcd.className = 'lcd-screen';
+        document.getElementById('mkt-result').innerText = 'ERROR';
+        document.getElementById('arith-result').innerText = '--.--°C';
+        document.getElementById('n-result').innerText = '0';
+        const statusMsg = document.getElementById('mkt-status');
+        statusMsg.innerText = msg;
+        statusMsg.style.color = 'var(--neon-yellow)';
     }
 </script>
 </body>
